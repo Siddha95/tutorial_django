@@ -1,0 +1,17 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{# Override branding block #}
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">Polls Administration</a></h1>
+{% endblock %}
+
+{# Optional: custom title tag #}
+{% block title %}Polls Admin | {{ site_title|default:_('Admin') }}{% endblock %}
+
+{# Footer tweak (optional) #}
+{% block footer %}
+<div class="text-muted" style="padding:1em 0;">
+  <small>&copy; {{ now|date:"Y" }} Polls Admin Demo</small>
+</div>
+{% endblock %}

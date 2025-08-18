@@ -1,0 +1,18 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{# Example of customizing admin index content. We replace the app list with a curated dashboard. #}
+{% block content %}
+  <div class="dashboard-module">
+    <h2>Quick Links</h2>
+    <ul>
+      <li><a href="{% url 'admin:polls_question_changelist' %}">Manage Questions</a></li>
+      <li><a href="{% url 'admin:polls_choice_changelist' %}">Manage Choices</a></li>
+      <li><a href="{% url 'admin:password_change' %}">Change Password</a></li>
+      <li><a href="{% url 'admin:logout' %}">Logout</a></li>
+    </ul>
+  </div>
+  <hr>
+  <h2>{% trans 'Applications' %}</h2>
+  {{ block.super }} {# Keep the default app list below our quick links #}
+{% endblock %}
