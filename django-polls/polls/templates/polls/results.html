@@ -1,9 +1,106 @@
-<h1>{{ question.question_text }}</h1>
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Risultati: {{ question.question_text|truncatechars:50 }} - Polls</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'polls/style.css' %}" />
+</head>
+<body>
+    <div class="container">
+        <h1>Risultati per: {{ question.question_text|escape }}</h1>
 
-<ul>
-{% for choice in question.choice_set.all %}
-    <li>{{ choice.choice_text }} -- {{ choice.votes }} vote{{ choice.votes|pluralize }}</li>
-{% endfor %}
-</ul>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message|escape }}
+                </div>
+            {% endfor %}
+        {% endif %}
 
-<a href="{% url 'polls:detail' question.id %}">Vote again?</a>
+        {% if question.choice_set.all %}
+            <div class="results-container">
+                {% for choice in question.choice_set.all %}
+                    <div class="result-item">
+                        <div class="choice-text">
+                            {{ choice.choice_text|escape }}
+                        </div>
+                        <div class="vote-count">
+                            <strong>{{ choice.votes }} voto{{ choice.votes|pluralize }}</strong>
+                            
+                            {% if question.total_votes > 0 %}
+                                {% widthratio choice.votes question.total_votes 100 as percentage %}
+                                <span class="percentage">({{ percentage|floatformat:1 }}%)</span>
+                                
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ percentage }}%"></div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <div class="total-votes">
+                    <p><strong>Totale voti: {{ question.total_votes }}</strong></p>
+                </div>
+            </div>
+        {% else %}
+            <div class="no-results">
+                <p>Nessun risultato disponibile per questo sondaggio.</p>
+            </div>
+        {% endif %}
+        
+        <div class="page-actions">
+            <a href="{% url 'polls:detail' question.id %}" class="btn btn-primary">Vota di nuovo</a>
+            <a href="{% url 'polls:index' %}" class="btn btn-secondary">Torna all'elenco</a>
+        </div>
+    </div>
+
+    <script>
+        // Protezione CSRF per eventuali richieste AJAX future
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Setup CSRF token per AJAX (se servisse in futuro)
+        const csrftoken = getCookie('csrftoken');
+        
+        // Setup CSRF token per eventuali form dinamici
+        if (typeof $ !== 'undefined') {
+            $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (!this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                    }
+                }
+            });
+        }
+        
+        // Animazione per le barre di progresso
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(function(bar) {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(function() {
+                    bar.style.transition = 'width 1s ease-in-out';
+                    bar.style.width = width;
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,12 +1,109 @@
-<h1>{{ question.question_text }}</h1>
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{{ question.question_text|truncatechars:50 }} - Polls</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'polls/style.css' %}" />
+</head>
+<body>
+    <div class="container">
+        <h1>{{ question.question_text|escape }}</h1>
 
-{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+        {% if error_message %}
+            <div class="error-message">
+                <p><strong>{{ error_message|escape }}</strong></p>
+            </div>
+        {% endif %}
 
-<form action="{% url 'polls:vote' question.id %}" method="post">
-{% csrf_token %}
-{% for choice in question.choice_set.all %}
-    <input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}" />
-    <label for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label><br />
-{% endfor %}
-<input type="submit" value="Vote" />
-</form>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message|escape }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form action="{% url 'polls:vote' question.id %}" method="post" id="vote-form">
+            {% csrf_token %}
+            
+            <!-- Hidden honeypot field per bot protection -->
+            <input type="text" name="honeypot" style="display: none;" />
+            
+            <!-- Timestamp per validazione temporale -->
+            <input type="hidden" name="form_timestamp" value="{{ request.session.session_key|default:'none' }}" />
+            
+            <fieldset>
+                <legend>Seleziona la tua risposta:</legend>
+                
+                {% if question.choice_set.all %}
+                    {% for choice in question.choice_set.all %}
+                        <div class="choice-option">
+                            <input type="radio" 
+                                   name="choice" 
+                                   id="choice{{ forloop.counter }}" 
+                                   value="{{ choice.id }}"
+                                   {% if forloop.first %}{% endif %}
+                                   required />
+                            <label for="choice{{ forloop.counter }}">
+                                {{ choice.choice_text|escape }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-choices">Nessuna opzione disponibile per questo sondaggio.</p>
+                {% endif %}
+            </fieldset>
+            
+            {% if question.choice_set.all %}
+                <div class="form-actions">
+                    <input type="submit" value="Vota" class="btn btn-primary" />
+                    <a href="{% url 'polls:index' %}" class="btn btn-secondary">Torna all'elenco</a>
+                </div>
+            {% endif %}
+        </form>
+    </div>
+
+    <script>
+        // Protezione CSRF per eventuali richieste AJAX future
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Setup CSRF token per AJAX (se servisse in futuro)
+        const csrftoken = getCookie('csrftoken');
+        
+        // Validazione form lato client
+        document.getElementById('vote-form').addEventListener('submit', function(e) {
+            const choices = document.querySelectorAll('input[name="choice"]');
+            const selected = Array.from(choices).some(choice => choice.checked);
+            
+            if (!selected) {
+                e.preventDefault();
+                alert('Seleziona una risposta prima di votare.');
+                return false;
+            }
+            
+            // Check honeypot
+            const honeypot = document.querySelector('input[name="honeypot"]');
+            if (honeypot && honeypot.value !== '') {
+                e.preventDefault();
+                return false; // Probabilmente un bot
+            }
+        });
+    </script>
+</body>
+</html>

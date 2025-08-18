@@ -1,4 +1,86 @@
-{% load static %}
+{%{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Sondaggi Disponibili - Polls</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'polls/style.css' %}" />
+</head>
+<body>
+    <div class="container">
+        <h1>Sondaggi Disponibili</h1>
+        
+        {% if latest_question_list %}
+            <div class="questions-list">
+                {% for question in latest_question_list %}
+                    <div class="question-item">
+                        <h3>
+                            <a href="{% url 'polls:detail' question.id %}">
+                                {{ question.question_text|escape|truncatechars:100 }}
+                            </a>
+                        </h3>
+                        
+                        {% if question.pub_date %}
+                            <p class="pub-date">
+                                <small>Pubblicato: {{ question.pub_date|date:"d M Y H:i" }}</small>
+                            </p>
+                        {% endif %}
+                        
+                        {% if question.choice_set.count %}
+                            <p class="choices-count">
+                                <small>{{ question.choice_set.count }} opzione{{ question.choice_set.count|pluralize }} disponibile{{ question.choice_set.count|pluralize }}</small>
+                            </p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-polls">
+                <p>Non sono disponibili sondaggi al momento.</p>
+                <p><a href="{% url 'admin:index' %}">Vai all'amministrazione</a> per creare nuovi sondaggi.</p>
+            </div>
+        {% endif %}
+        
+        <div class="page-actions">
+            <a href="{% url 'admin:index' %}" class="btn btn-admin">Amministrazione</a>
+        </div>
+    </div>
+
+    <script>
+        // Protezione CSRF per eventuali richieste AJAX future
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Setup CSRF token per AJAX (se servisse in futuro)
+        const csrftoken = getCookie('csrftoken');
+        
+        // Setup CSRF token per eventuali form dinamici
+        if (typeof $ !== 'undefined') {
+            $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (!this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>tic %}
 <link rel="stylesheet" type="text/css" href="{% static 'polls/style.css' %}" />
 {%  if  latest_question_list  %} 
     <ul>

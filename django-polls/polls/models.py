@@ -16,6 +16,11 @@ class Question(models.Model):
     was_published_recently.admin_order_field = 'pub_date'
     was_published_recently.boolean = True
     was_published_recently.short_description = 'Published recently?'
+    
+    @property
+    def total_votes(self):
+        """Calculate total votes for this question"""
+        return sum(choice.votes for choice in self.choice_set.all())
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
