@@ -15,8 +15,11 @@ Including another URLconf
 """
 from django.conf.urls import include , url
 from django.contrib import admin
+from django.views.generic import RedirectView
 
 urlpatterns = [
+    # Redirect root to polls index
+    url(r'^$', RedirectView.as_view(pattern_name='polls:index', permanent=False)),
     url(r'^polls/', include('polls.urls')),
     url(r'^admin/', admin.site.urls),
 ]
